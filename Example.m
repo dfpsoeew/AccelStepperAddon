@@ -1,9 +1,9 @@
 %% Create the Arduino object using the AccelStepperAddon library
-a = arduino('COM4', 'Due', 'Libraries', ...
+a = arduino('COM3', 'Uno', 'Libraries', ...
     {'AccelStepperAddon/AccelStepperAddon'}, 'Traceon', true)
 
 %% Create a stepper object with pins D2-D5
-s1 = addon(a,'AccelStepperAddon/AccelStepperAddon', {'D2','D3','D4','D5'})
+s1 = addon(a, 'AccelStepperAddon/AccelStepperAddon', {'D2', 'D3', 'D4', 'D5'})
 
 %% Set the maximum speed of the stepper
 s1.setMaxSpeed(400)
@@ -17,7 +17,7 @@ s1.setAcceleration(400)
 %% Get the acceleration of the stepper
 s1.acceleration()
 
-%% Enable the stepper to step when a step is due, implementing acceleration 
+%% Enable the stepper to step when a step is due, implementing acceleration
 % and deceleration to reach the target position
 s1.startrun()
 
@@ -52,7 +52,16 @@ s1.disableOutputs()
 s1.enableOutputs()
 
 %% Create a second stepper
-s2 = addon(a,"AccelStepperAddon/AccelStepperAddon", {'D6','D7','D8','D9'})
+s2 = addon(a, 'AccelStepperAddon/AccelStepperAddon', 'DRIVER', {'D6', 'D7'})
+
+%% Set the minimum pulse width allowed by the stepper driver
+s2.setMinPulseWidth(50)
+
+%% Set the enable pin for the stepper driver (default '')
+s2.setEnablePin('D8')
+
+%% Invert the enable pin
+s2.setPinsInverted(false, false, true)
 
 %% Set the maximum speed of the stepper (limits the value of setSpeed)
 s2.setMaxSpeed(400)

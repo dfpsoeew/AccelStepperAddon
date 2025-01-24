@@ -104,7 +104,22 @@ s1.enableOutputs()
 
 Create a second stepper:
 ```Matlab
-s2 = addon(a,"AccelStepperAddon/AccelStepperAddon", {'D6','D7','D8','D9'})
+s2 = addon(a,"AccelStepperAddon/AccelStepperAddon", 'DRIVER', {'D7', 'D8'})
+```
+
+Set the minimum pulse width allowed by the stepper driver:
+```Matlab
+s2.setMinPulseWidth(50)
+```
+
+Set the enable pin for the stepper driver (default ''):
+```Matlab
+s2.setEnablePin('D6')
+```
+
+Invert the enable pin:
+```Matlab
+s2.setPinsInverted(false, false, true)
 ```
 
 Set the maximum speed of the stepper:
@@ -145,9 +160,6 @@ The following AccelStepper library functions are *not* implemented in this inter
 - `runToPosition`
 - `runSpeedToPosition`
 - `runToNewPosition`
-- `setMinPulseWidth`
-- `setEnablePin`
-- `setPinsInverted`
 
 Note that for the 28BYJ-48 stepper the middle two pins must be swapped physically (initialized with `{'D2','D3','D4','D5'}`) or in software (initialized with `{'D2','D4','D3','D5'}`).
 

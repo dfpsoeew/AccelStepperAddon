@@ -1,4 +1,4 @@
-classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.CustomDisplay
+classdef AccelStepperAddon < matlabshared.addon.LibraryBase & matlab.mixin.CustomDisplay
     % AccelStepperAddon - MATLAB Interface for Arduino Stepper Motor Control
     %
     % Create an AccelStepperAddon device object to control stepper motors
@@ -7,7 +7,7 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
     % See also https://www.airspayce.com/mikem/arduino/AccelStepperAddon
     % Based on https://de.mathworks.com/matlabcentral/fileexchange/72441-dht22-add-on-library-for-arduino
 
-    properties(Access = private, Constant = true)
+    properties (Access = private, Constant = true)
         CREATE_STEPPER              = hex2dec('01')
         DELETE_STEPPER              = hex2dec('02')
         MOVETO_STEPPER              = hex2dec('03')
@@ -25,15 +25,28 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
         STOP_STEPPER                = hex2dec('0F')
         DISABLEOUTPUTS_STEPPER      = hex2dec('10')
         ENABLEOUTPUTS_STEPPER       = hex2dec('11')
-        ISRUNNING_STEPPER           = hex2dec('12')
-        STARTRUN_STEPPER            = hex2dec('13')
-        STARTRUNSPEED_STEPPER       = hex2dec('14')
-        STOPRUN_STEPPER             = hex2dec('15')
+        SETMINPULSEWIDTH_STEPPER    = hex2dec('12')
+        SETENABLEPIN_STEPPER        = hex2dec('13')
+        SETPINSINVERTED_STEPPER     = hex2dec('14')
+        ISRUNNING_STEPPER           = hex2dec('15')
+        STARTRUN_STEPPER            = hex2dec('16')
+        STARTRUNSPEED_STEPPER       = hex2dec('17')
+        STOPRUN_STEPPER             = hex2dec('18')
 
         MAX_NUMBER_STEPPERS = 4 % Value needs to match the one in AccelStepperAddon.h
     end
 
-    properties(Access = protected, Constant = true)
+    properties (Constant)
+        MotorInterfaceType = struct('FUNCTION', 0, ...
+            'DRIVER', 1, ...
+            'FULL2WIRE', 2, ...
+            'FULL3WIRE', 3, ...
+            'FULL4WIRE', 4, ...
+            'HALF3WIRE', 6, ...
+            'HALF4WIRE', 8);
+    end
+
+    properties (Access = protected, Constant = true)
         LibraryName = 'AccelStepperAddon/AccelStepperAddon'
         DependentLibraries = {}
         LibraryHeaderFiles = {'AccelStepper/AccelStepper.h'}
@@ -41,33 +54,34 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
         CppClassName = 'AccelStepperAddon'
     end
 
-    properties(Access = private)
+    properties (Access = private)
         StepperID;
         ResourceOwner = 'AccelStepperAddon/AccelStepperAddon';
     end
 
-    properties(SetAccess = private) % Default constructor arguments
-        Interface = 4;
-        Pins = {'D2','D3','D4','D5'};
-        Enable = true;
+    properties (SetAccess = private) % Default constructor arguments
+        Interface = 4; % Default interface 'FULL4WIRE'
+        Pins = {'D2', 'D3', 'D4', 'D5'}; % Default stepper pins
+        Enable = true; % Enable by default
+        EnablePin = ''; % Use no enable pin by default
     end
 
     % Constructor Method
-    methods(Hidden, Access = public)
+    methods (Hidden, Access = public)
         function obj = AccelStepperAddon(parentObj, varargin)
             %ACCELSTEPPERADDON Create an AccelStepperAddon object.
             %   s = addon(a,'AccelStepperAddon/AccelStepperAddon', interface, arduinoPins, enable)
-            %   Interfaces the constructor method of the Arduino 
+            %   Interfaces the constructor method of the Arduino
             %   AccelStepper library. Refer to its documentation for more
             %   details. In short, the parameters are:
-            %   interface: (optional) Number of pins to interface to
-            %   (default 4).
-            %   arduinoPins: (optional) Arduino digital pin numbers for 
-            %   motor pins. Provide a cell array of strings/chars giving 
-            %   the names of the Arduino pins assigned to this stepper 
+            %   interface: (optional) Motor interface type (default
+            %   'FULL4WIRE')
+            %   arduinoPins: (optional) Arduino digital pin numbers for
+            %   motor pins. Provide a cell array of strings/chars giving
+            %   the names of the Arduino pins assigned to this stepper
             %   (default {'D2','D3','D4','D5'}).
-            %   enable (optional): If this is true (the default), 
-            %   enableOutputs() will be called to enable the output pins at 
+            %   enable (optional): If this is true (the default),
+            %   enableOutputs() will be called to enable the output pins at
             %   construction time.
             %
             %   Example:
@@ -80,11 +94,11 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
             %       s.distanceToGo()
             %
             %   See also ARDUINO, ADDON
-            
+
             for i = 1:numel(varargin)
-                if isnumeric(varargin{i})
-                    obj.Interface = varargin{i};
-                elseif iscell(varargin{i}) && numel(varargin{i})<5
+                if ischar(varargin{i})
+                    obj.Interface = obj.MotorInterfaceType.(varargin{i});
+                elseif iscell(varargin{i}) && numel(varargin{i}) < 5
                     obj.Pins = varargin{i};
                 elseif islogical(varargin{i})
                     obj.Enable = varargin{i};
@@ -122,7 +136,7 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
                 end
 
                 % Setup the Pins for use
-                cellfun(@(x)configurePinResource(parentObj, x, obj.ResourceOwner, 'DigitalOutput'),obj.Pins);
+                cellfun(@(x)configurePinResource(obj.Parent, x, obj.ResourceOwner, 'DigitalOutput'), obj.Pins);
                 % Increment current resource count
                 incrementResourceCount(obj.Parent, 'AccelStepperAddon');
                 % Create Stepper
@@ -134,11 +148,14 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
     end
 
     % Destructor Method
-    methods(Access = protected)
+    methods (Access = protected)
         function delete(obj)
             try
                 parentObj = obj.Parent;
-                cellfun(@(x)configurePinResource(parentObj, x, obj.ResourceOwner, 'Unset'),obj.Pins);
+                cellfun(@(x)configurePinResource(parentObj, x, obj.ResourceOwner, 'Unset'), obj.Pins);
+                if ~isempty(obj.EnablePin)
+                    configurePinResource(parentObj, obj.EnablePin, obj.ResourceOwner, 'Unset');
+                end
                 decrementResourceCount(obj.Parent, 'AccelStepperAddon');
                 deleteStepper(obj);
             catch
@@ -147,22 +164,32 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
         end
     end
 
-    methods(Access = private)
+    methods (Access = private)
         % Create Stepper
         function createStepper(obj)
             cmdID = obj.CREATE_STEPPER;
-            terminals = cellfun(@(x)getTerminalsFromPins(obj.Parent,x),obj.Pins);
-            terminals = [terminals zeros(1,4-numel(terminals))];
-            sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID obj.Interface terminals obj.Enable]);
+            terminals = cellfun(@(x)getTerminalsFromPins(obj.Parent, x), obj.Pins);
+            terminals = [terminals, zeros(1, 4-numel(terminals))];
+            sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, obj.Interface, terminals, obj.Enable]);
         end
         % Delete Stepper
         function deleteStepper(obj)
             cmdID = obj.DELETE_STEPPER;
             sendCommand(obj, obj.LibraryName, cmdID, obj.StepperID);
         end
+        % Create Enable Pin
+        function createEnablePin(obj)
+            cmdID = obj.SETENABLEPIN_STEPPER;
+            if isempty(obj.EnablePin)
+                terminal = 0; % No pin assigned
+            else
+                terminal = getTerminalsFromPins(obj.Parent, obj.EnablePin);
+            end
+            sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, terminal]);
+        end
     end
 
-    methods(Access = public)
+    methods (Access = public)
         function moveTo(obj, absolute)
             %MOVETO Set the target position. The run() function will try to
             %move the motor (at most one step per call) from the current
@@ -184,7 +211,7 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
 
             try
                 % Data is send in bytes. Split long up in four bytes.
-                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID typecast(int32(absolute),'uint8')]);
+                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, typecast(int32(absolute), 'uint8')]);
             catch e
                 throwAsCaller(e);
             end
@@ -207,7 +234,7 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
 
             try
                 % Data is send in bytes. Split long up in four bytes.
-                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID typecast(int32(relative),'uint8')]);
+                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, typecast(int32(relative), 'uint8')]);
             catch e
                 throwAsCaller(e);
             end
@@ -236,7 +263,7 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
 
             try
                 % Data is send in bytes. Split float (=single) up in four bytes.
-                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID typecast(single(speed),'uint8')]);
+                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, typecast(single(speed), 'uint8')]);
             catch e
                 throwAsCaller(e);
             end
@@ -284,7 +311,7 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
 
             try
                 % Data is send in bytes. Split float (=single) up in four bytes.
-                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID typecast(single(acceleration),'uint8')]);
+                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, typecast(single(acceleration), 'uint8')]);
             catch e
                 throwAsCaller(e);
             end
@@ -337,7 +364,7 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
 
             try
                 % Data is send in bytes. Split float (=single) up in four bytes.
-                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID typecast(single(speed),'uint8')]);
+                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, typecast(single(speed), 'uint8')]);
             catch e
                 throwAsCaller(e);
             end
@@ -460,7 +487,7 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
 
             try
                 % Data is send in bytes. Split long up in four bytes.
-                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID typecast(int32(position),'uint8')]);
+                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, typecast(int32(position), 'uint8')]);
             catch e
                 throwAsCaller(e);
             end
@@ -530,6 +557,112 @@ classdef AccelStepperAddon <  matlabshared.addon.LibraryBase & matlab.mixin.Cust
 
             try
                 sendCommand(obj, obj.LibraryName, cmdID, obj.StepperID);
+            catch e
+                throwAsCaller(e);
+            end
+        end
+
+        function setMinPulseWidth(obj, minWidth)
+            %SETMINPULSEWIDTH Sets the minimum pulse width allowed by the
+            %stepper driver. The minimum practical pulse width is
+            %approximately 20 microseconds. Times less than 20 microseconds
+            %will usually result in 20 microseconds or so.
+            %   minWidth: The minimum pulse width in microseconds.
+            %
+            %   Example:
+            %       a = arduino('COM5', 'ProMini328_5V','Libraries',{'AccelStepperAddon/AccelStepperAddon'},'Traceon',true,'ForceBuildOn',true)
+            %       s = addon(a,'AccelStepperAddon/AccelStepperAddon','DRIVER',{'D7','D8'})
+            %       s.setMinPulseWidth(50)
+            %
+            %   See also ARDUINO, ADDON
+
+            cmdID = obj.SETMINPULSEWIDTH_STEPPER;
+
+            try
+                % Data is send in bytes. Split unsigned int up in two bytes.
+                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, typecast(uint16(minWidth), 'uint8')]);
+            catch e
+                throwAsCaller(e);
+            end
+        end
+
+        function setEnablePin(obj, enablePin)
+            %SETENABLEPIN Sets the enable pin number for stepper drivers.
+            %'' indicates unused (default). Otherwise, if a pin is set, the
+            %pin will be turned on when enableOutputs() is called and
+            %switched off when disableOutputs() is called.
+            %   enablePin: Arduino digital pin number for motor enable
+            %
+            %   Example:
+            %       a = arduino('COM5', 'ProMini328_5V','Libraries',{'AccelStepperAddon/AccelStepperAddon'},'Traceon',true,'ForceBuildOn',true)
+            %       s = addon(a,'AccelStepperAddon/AccelStepperAddon',{'D2','D3','D4','D5'})
+            %       s.setEnablePin('D10')
+            %       s.setEnablePin('')
+            %
+            %   See also ARDUINO, ADDON, ENABLEOUTPUTS, DISABLEOUTPUTS
+
+            % Check if a pin was already set and handle its cleanup
+            if ~isempty(obj.EnablePin)
+                % Release the previously configured pin resource
+                configurePinResource(obj.Parent, obj.EnablePin, obj.ResourceOwner, 'Unset');
+                configurePinResource(obj.Parent, obj.EnablePin, '', 'Unset');
+            end
+
+            try
+                if ~isempty(enablePin)
+                    % Validate Uniqueness of Pin Resource
+                    terminal = getTerminalsFromPins(obj.Parent, enablePin);
+                    owner = getResourceOwner(obj.Parent, terminal);
+                    if ~isempty(owner)
+                        error('AccelStepperAddon:AccelStepperAddon:DuplicatePin', 'Arduino pin %s is registered with %s object. Sharing of pin is not supported.', arduinoPin, owner);
+                    end
+
+                    % Initialize Property: Arduino Pin
+                    if ischar(enablePin) || isstring(enablePin)
+                        obj.EnablePin = char(enablePin);
+                    else
+                        error('AccelStepperAddon:AccelStepperAddon:InvalidPin', 'arduinoPin argument expects a char or string but received %s.', class(arduinoPin));
+                    end
+
+                    % Setup the Pin for use
+                    configurePinResource(obj.Parent, obj.EnablePin, obj.ResourceOwner, 'DigitalOutput');
+                end
+                % Create Enable Pin
+                createEnablePin(obj);
+            catch e
+                throwAsCaller(e);
+            end
+        end
+
+        function setPinsInverted(obj, varargin)
+            %SETPINSINVERTED Sets the inversion for stepper driver pins
+            %   directionInvert: True for inverted direction pin, false for
+            %   non-inverted
+            %	stepInvert: True for inverted step pin, false for
+            %   non-inverted
+            %   enableInvert: True for inverted enable pin, false (default)
+            %   for non-inverted
+            %
+            %SETPINSINVERTED Sets the inversion for 2, 3 and 4 wire stepper
+            %pins
+            %   pin1Invert: True for inverted pin1, false for non-inverted
+            %   pin2Invert: True for inverted pin2, false for non-inverted
+            %   pin3Invert: True for inverted pin3, false for non-inverted
+            %   pin4Invert: True for inverted pin4, false for non-inverted
+            %   enableInvert:True for inverted enable pin, false (default)
+            %   for non-inverted
+            %
+            %   Example:
+            %       a = arduino('COM5', 'ProMini328_5V','Libraries',{'AccelStepperAddon/AccelStepperAddon'},'Traceon',true,'ForceBuildOn',true)
+            %       s = addon(a,'AccelStepperAddon/AccelStepperAddon',{'D2','D3','D4','D5'})
+            %       s.setPinsInverted(false, false, false, false, true)
+            %
+            %   See also ARDUINO, ADDON
+
+            cmdID = obj.SETPINSINVERTED_STEPPER;
+
+            try
+                sendCommand(obj, obj.LibraryName, cmdID, [obj.StepperID, varargin{:}]);
             catch e
                 throwAsCaller(e);
             end
