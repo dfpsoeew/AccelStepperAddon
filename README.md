@@ -1,6 +1,6 @@
 # AccelStepperAddon - MATLAB Interface for Arduino Stepper Motor Control
 
-MATLAB add-on that allows to control stepper motors through an Arduino board by interfacing the powerful [AccelStepper](https://www.arduino.cc/reference/en/libraries/accelstepper/) library. It is inspired by the [DHT22 add-on](https://mathworks.com/matlabcentral/fileexchange/72441-dht22-add-on-library-for-arduino) provided by MATLAB and follows the [MATLAB Arduino add-on library guide](https://www.mathworks.com/help/supportpkg/arduinoio/custom-arduino-libraries.html).
+MATLAB add-on that allows to control stepper motors through an Arduino board by interfacing the powerful [AccelStepper](https://www.arduino.cc/reference/en/libraries/accelstepper/) library. It is inspired by the [DHT22 add-on](https://mathworks.com/matlabcentral/fileexchange/72441-dht22-add-on-library-for-arduino) provided by MATLAB and follows the [MATLAB Arduino add-on library guide](https://www.mathworks.com/help/matlab/arduinoio-custom-arduino-libraries.html).
 
 Confirmed to work in MATLAB 2023b on Arduino Pro Mini, Uno R3, and Due using the common 28BYJ-48 stepper motors with ULN2003A controllers.
 
@@ -11,7 +11,7 @@ Confirmed to work in MATLAB 2023b on Arduino Pro Mini, Uno R3, and Due using the
 - Create a folder `+arduinoioaddons` in your working directory.
 - Create a folder `+AccelStepperAddon` inside this folder.
 - Paste the files of this project into it.
-- Your folder structure should now look like [this](https://www.mathworks.com/help/supportpkg/arduinoio/ug/create-custom-folder-structure.html).
+- Your folder structure should now look like [this](https://www.mathworks.com/help/matlab/supportpkg/create-custom-folder-structure.html).
 
 ## Usage examples
 See `Example.m` for the complete code example.
@@ -168,6 +168,6 @@ The maximum number of steppers is currently hardcoded to `MAX_NUMBER_STEPPERS = 
 ## References
 
 - The interfaced library: https://www.airspayce.com/mikem/arduino/AccelStepper  
-- Following the MATLAB Arduino add-on library guide: https://www.mathworks.com/help/supportpkg/arduinoio/custom-arduino-libraries.html
+- Following the MATLAB Arduino add-on library guide: https://www.mathworks.com/help/matlab/arduinoio-custom-arduino-libraries.html
 - Following the MATLAB example: https://www.mathworks.com/matlabcentral/fileexchange/72441-dht22-add-on-library-for-arduino
-- Example of the add-on folder structure: https://www.mathworks.com/help/supportpkg/arduinoio/ug/create-custom-folder-structure.html
+- Example of the add-on folder structure: https://www.mathworks.com/help/matlab/supportpkg/create-custom-folder-structure.html
