@@ -34,7 +34,8 @@
 #define ISRUNNING_STEPPER 0x15
 #define STARTRUN_STEPPER 0x16
 #define STARTRUNSPEED_STEPPER 0x17
-#define STOPRUN_STEPPER 0x18
+#define STARTRUNSPEEDTOPOSITION_STEPPER 0x18
+#define STOPRUN_STEPPER 0x19
 
 // Debug Strings
 const char MSG_CREATE_STEPPER[] PROGMEM = "STEPPER[%d] = new AccelStepper(%d, %d, %d, %d, %d, %d);\n";
@@ -61,7 +62,8 @@ const char MSG_SETPINSINVERTED2_STEPPER[] PROGMEM = "STEPPER[%d]->setPinsInverte
 const char MSG_ISRUNNING_STEPPER[] PROGMEM = "STEPPER[%d]->isRunning() --> %d;\n";
 const char MSG_STARTRUN_STEPPER[] PROGMEM = "Enable STEPPER[%d]->run();\n";
 const char MSG_STARTRUNSPEED_STEPPER[] PROGMEM = "Enable STEPPER[%d]->runSpeed();\n";
-const char MSG_STOPRUN_STEPPER[] PROGMEM = "Disable STEPPER[%d]->run() and runSpeed();\n";
+const char MSG_STARTRUNSPEEDTOPOSITION_STEPPER[] PROGMEM = "Enable STEPPER[%d]->runSpeedToPosition();\n";
+const char MSG_STOPRUN_STEPPER[] PROGMEM = "Disable STEPPER[%d]->run(), runSpeed(), and runSpeedToPosition();\n";
 const char MSG_UNKNOWN_CMD[] PROGMEM = "STEPPER[%d]->Unknown Command\n";
 
 // Saves integer and byte array in same memory location
@@ -107,6 +109,10 @@ public:
 	bool runSpeedEnabled[MAX_NUMBER_STEPPERS];
 
 public:
+	// Steppers in 'runSpeedToPosition()' mode
+	bool runSpeedToPositionEnabled[MAX_NUMBER_STEPPERS];
+
+public:
 	// Constructor
 	AccelStepperAddon(MWArduinoClass& a)
 	{
@@ -129,6 +135,10 @@ public:
 			else if (runSpeedEnabled[i])
 			{
 				steppers[i]->runSpeed(); // Call runSpeed() method from Stepper Library
+			}
+			else if (runSpeedToPositionEnabled[i])
+			{
+				steppers[i]->runSpeedToPosition(); // Call runSpeedToPosition() method from Stepper Library
 			}
 		}
 	}
@@ -488,6 +498,7 @@ public:
 			// Enable stepper for mode 'run()'
 			runEnabled[stepperID] = true;
 			runSpeedEnabled[stepperID] = false;
+			runSpeedToPositionEnabled[stepperID] = false;
 			// Print debug string
 			debugPrint(MSG_STARTRUN_STEPPER, stepperID);
 			// Send response
@@ -502,8 +513,24 @@ public:
 			// Enable stepper for mode 'runSpeed()'
 			runEnabled[stepperID] = false;
 			runSpeedEnabled[stepperID] = true;
+			runSpeedToPositionEnabled[stepperID] = false;
 			// Print debug string
 			debugPrint(MSG_STARTRUNSPEED_STEPPER, stepperID);
+			// Send response
+			sendResponseMsg(cmdID, 0, 0);
+			break;
+		}
+
+		case STARTRUNSPEEDTOPOSITION_STEPPER:
+		{
+			// Get stepper ID from dataIn
+			byte stepperID = dataIn[0];
+			// Enable stepper for mode 'runSpeedToPosition()'
+			runEnabled[stepperID] = false;
+			runSpeedEnabled[stepperID] = false;
+			runSpeedToPositionEnabled[stepperID] = true;
+			// Print debug string
+			debugPrint(MSG_STARTRUNSPEEDTOPOSITION_STEPPER, stepperID);
 			// Send response
 			sendResponseMsg(cmdID, 0, 0);
 			break;
@@ -516,6 +543,7 @@ public:
 			// Stop the stepper
 			runEnabled[stepperID] = false;
 			runSpeedEnabled[stepperID] = false;
+			runSpeedToPositionEnabled[stepperID] = false;
 			// Print debug string
 			debugPrint(MSG_STOPRUN_STEPPER, stepperID);
 			// Send response

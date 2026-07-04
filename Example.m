@@ -78,5 +78,11 @@ s2.startrunSpeed()
 %% Stop movement immediately
 s2.stoprun()
 
+%% Move back 100 steps
+s2.move(-100)
+
+%% Start movement with constant speed to the target position
+s2.startrunSpeedToPosition()
+
 %% Clean up (takes ~20 seconds)
 clear a s1 s2

@@ -149,6 +149,16 @@ Stop movement immediately:
 s2.stoprun()
 ```
 
+Move back 100 steps:
+```Matlab
+s2.move(-100)
+```
+
+Start movement with constant speed to the target position:
+```Matlab
+s2.startrunSpeedToPosition()
+```
+
 Clean up (takes ~20 seconds):
 ```Matlab
 clear a s1 s2
@@ -157,9 +167,8 @@ clear a s1 s2
 ## Notes
 The following AccelStepper library functions are *not* implemented in this interface yet:
 
-- `runToPosition`
-- `runSpeedToPosition`
-- `runToNewPosition`
+- `runToPosition` (blocking the event loop)
+- `runToNewPosition` (blocking the event loop)
 
 Note that for the 28BYJ-48 stepper the middle two pins must be swapped physically (initialized with `{'D2','D3','D4','D5'}`) or in software (initialized with `{'D2','D4','D3','D5'}`).
 

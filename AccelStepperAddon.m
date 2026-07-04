@@ -8,30 +8,31 @@ classdef AccelStepperAddon < matlabshared.addon.LibraryBase & matlab.mixin.Custo
     % Based on https://de.mathworks.com/matlabcentral/fileexchange/72441-dht22-add-on-library-for-arduino
 
     properties (Access = private, Constant = true)
-        CREATE_STEPPER              = hex2dec('01')
-        DELETE_STEPPER              = hex2dec('02')
-        MOVETO_STEPPER              = hex2dec('03')
-        MOVE_STEPPER                = hex2dec('04')
-        SETMAXSPEED_STEPPER         = hex2dec('05')
-        MAXSPEED_STEPPER            = hex2dec('06')
-        SETACCELERATION_STEPPER     = hex2dec('07')
-        ACCELERATION_STEPPER        = hex2dec('08')
-        SETSPEED_STEPPER            = hex2dec('09')
-        SPEED_STEPPER               = hex2dec('0A')
-        DISTANCETOGO_STEPPER        = hex2dec('0B')
-        TARGETPOSITION_STEPPER      = hex2dec('0C')
-        CURRENTPOSITION_STEPPER     = hex2dec('0D')
-        SETCURRENTPOSITION_STEPPER  = hex2dec('0E')
-        STOP_STEPPER                = hex2dec('0F')
-        DISABLEOUTPUTS_STEPPER      = hex2dec('10')
-        ENABLEOUTPUTS_STEPPER       = hex2dec('11')
-        SETMINPULSEWIDTH_STEPPER    = hex2dec('12')
-        SETENABLEPIN_STEPPER        = hex2dec('13')
-        SETPINSINVERTED_STEPPER     = hex2dec('14')
-        ISRUNNING_STEPPER           = hex2dec('15')
-        STARTRUN_STEPPER            = hex2dec('16')
-        STARTRUNSPEED_STEPPER       = hex2dec('17')
-        STOPRUN_STEPPER             = hex2dec('18')
+        CREATE_STEPPER                  = hex2dec('01')
+        DELETE_STEPPER                  = hex2dec('02')
+        MOVETO_STEPPER                  = hex2dec('03')
+        MOVE_STEPPER                    = hex2dec('04')
+        SETMAXSPEED_STEPPER             = hex2dec('05')
+        MAXSPEED_STEPPER                = hex2dec('06')
+        SETACCELERATION_STEPPER         = hex2dec('07')
+        ACCELERATION_STEPPER            = hex2dec('08')
+        SETSPEED_STEPPER                = hex2dec('09')
+        SPEED_STEPPER                   = hex2dec('0A')
+        DISTANCETOGO_STEPPER            = hex2dec('0B')
+        TARGETPOSITION_STEPPER          = hex2dec('0C')
+        CURRENTPOSITION_STEPPER         = hex2dec('0D')
+        SETCURRENTPOSITION_STEPPER      = hex2dec('0E')
+        STOP_STEPPER                    = hex2dec('0F')
+        DISABLEOUTPUTS_STEPPER          = hex2dec('10')
+        ENABLEOUTPUTS_STEPPER           = hex2dec('11')
+        SETMINPULSEWIDTH_STEPPER        = hex2dec('12')
+        SETENABLEPIN_STEPPER            = hex2dec('13')
+        SETPINSINVERTED_STEPPER         = hex2dec('14')
+        ISRUNNING_STEPPER               = hex2dec('15')
+        STARTRUN_STEPPER                = hex2dec('16')
+        STARTRUNSPEED_STEPPER           = hex2dec('17')
+        STARTRUNSPEEDTOPOSITION_STEPPER = hex2dec('18')
+        STOPRUN_STEPPER                 = hex2dec('19')
 
         MAX_NUMBER_STEPPERS = 4 % Value needs to match the one in AccelStepperAddon.h
     end
@@ -698,7 +699,7 @@ classdef AccelStepperAddon < matlabshared.addon.LibraryBase & matlab.mixin.Custo
             %       s = addon(a,'AccelStepperAddon/AccelStepperAddon',{'D2','D3','D4','D5'})
             %       s.startrun()
             %
-            %   See also ARDUINO, ADDON, STOP, STARTRUNSPEED, STOPRUN
+            %   See also ARDUINO, ADDON, STOP, STARTRUNSPEED, STARTRUNSPEEDTOPOSITION, STOPRUN
 
             cmdID = obj.STARTRUN_STEPPER;
 
@@ -717,7 +718,7 @@ classdef AccelStepperAddon < matlabshared.addon.LibraryBase & matlab.mixin.Custo
             %       s = addon(a,'AccelStepperAddon/AccelStepperAddon',{'D2','D3','D4','D5'})
             %       s.startrunSpeed()
             %
-            %   See also ARDUINO, ADDON, STOP, STARTRUN, STOPRUN
+            %   See also ARDUINO, ADDON, STOP, STARTRUN, STARTRUNSPEEDTOPOSITION, STOPRUN
 
             cmdID = obj.STARTRUNSPEED_STEPPER;
 
@@ -728,15 +729,34 @@ classdef AccelStepperAddon < matlabshared.addon.LibraryBase & matlab.mixin.Custo
             end
         end
 
+        function startrunSpeedToPosition(obj)
+            %STARTRUNSPEEDTOPOSITION Starts the stepping in 'runSpeed()' mode to the target position
+            %
+            %   Example:
+            %       a = arduino('COM5', 'ProMini328_5V','Libraries',{'AccelStepperAddon/AccelStepperAddon'},'Traceon',true,'ForceBuildOn',true)
+            %       s = addon(a,'AccelStepperAddon/AccelStepperAddon',{'D2','D3','D4','D5'})
+            %       s.startrunSpeedToPosition()
+            %
+            %   See also ARDUINO, ADDON, STOP, STARTRUN, STARTRUNSPEED, STOPRUN
+
+            cmdID = obj.STARTRUNSPEEDTOPOSITION_STEPPER;
+
+            try
+                sendCommand(obj, obj.LibraryName, cmdID, obj.StepperID);
+            catch e
+                throwAsCaller(e);
+            end
+        end
+
         function stoprun(obj)
-            %STOPRUN Stops the 'run()' and 'runSpeed()' stepping modes
+            %STOPRUN Stops the 'run()', 'runSpeed()', and 'runSpeedToPosition()' stepping modes
             %
             %   Example:
             %       a = arduino('COM5', 'ProMini328_5V','Libraries',{'AccelStepperAddon/AccelStepperAddon'},'Traceon',true,'ForceBuildOn',true)
             %       s = addon(a,'AccelStepperAddon/AccelStepperAddon',{'D2','D3','D4','D5'})
             %       s.stop()
             %
-            %   See also ARDUINO, ADDON, STARTRUN, STARTRUNSPEED
+            %   See also ARDUINO, ADDON, STARTRUN, STARTRUNSPEED, STARTRUNSPEEDTOPOSITION
 
             cmdID = obj.STOPRUN_STEPPER;
 
